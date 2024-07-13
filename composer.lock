@@ -5753,12 +5753,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tursodatabase/turso-driver-laravel.git",
-                "reference": "e8c3be5903c389d8c74069ef750a9c30e7ee048f"
+                "reference": "6d47798fff82713b348fcdcd08b3ab9ca6becaff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tursodatabase/turso-driver-laravel/zipball/e8c3be5903c389d8c74069ef750a9c30e7ee048f",
-                "reference": "e8c3be5903c389d8c74069ef750a9c30e7ee048f",
+                "url": "https://api.github.com/repos/tursodatabase/turso-driver-laravel/zipball/6d47798fff82713b348fcdcd08b3ab9ca6becaff",
+                "reference": "6d47798fff82713b348fcdcd08b3ab9ca6becaff",
                 "shasum": ""
             },
             "require": {
@@ -5825,7 +5825,7 @@
                     "url": "https://github.com/darkterminal"
                 }
             ],
-            "time": "2024-07-12T08:53:26+00:00"
+            "time": "2024-07-13T23:06:47+00:00"
         },
         {
             "name": "vlucas/phpdotenv",

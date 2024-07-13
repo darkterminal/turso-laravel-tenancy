@@ -69,6 +69,7 @@ class TursoDatabaseManager implements TenantDatabaseManager
             if ($this->connection_mode === 'remote') {
                 $dbName = $this->slugify(pathinfo($tenant->database()->getName(), PATHINFO_FILENAME));
                 $deleteDb = $this->tursoDeleteDatabase($this->organizationName, $dbName, env('TURSO_API_TOKEN'));
+                unlink("{$this->db_path}" . DIRECTORY_SEPARATOR . "{$dbName}.bin");
                 return $deleteDb['status'];
             }
             return unlink($this->databaseLocation($tenant->database()->getName()));

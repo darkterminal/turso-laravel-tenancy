@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Stancl\Tenancy\Commands;
 
 use Illuminate\Console\Command;
+use RuntimeException;
 use Stancl\Tenancy\Concerns\DealsWithMigrations;
 use Stancl\Tenancy\Concerns\HasATenantsOption;
 use Symfony\Component\Console\Input\InputOption;
@@ -38,19 +39,51 @@ final class MigrateFresh extends Command
     public function handle()
     {
         tenancy()->runForMultiple($this->option('tenants'), function ($tenant) {
-            $this->info("Turso Tenant: {$tenant->getTenantKey()}");
-            $this->info("This command cannot be used on Turso Database.");
-            $this->info("Use individuals command tenants:rollback and tenants:migrate manually");
-            // $this->line('Dropping tables.');
-            // $this->call('tenants:rollback');
-            // $this->line('Migrating.');
-            // $this->callSilent('tenants:migrate', [
-            //     '--tenants' => [$tenant->getTenantKey()],
-            //     '--step' => $this->option('step'),
-            //     '--force' => true,
-            // ]);
+            $tenantId = $tenant->getTenantKey();
+            $this->info("Tenant: {$tenantId}");
+            $this->line('Dropping tables.');
+            $this->call('db:wipe');
+
+            $this->line('Migrating.');
+            try {
+                $phpExecutable = $this->getPhpExecutable();
+                $command = escapeshellcmd($phpExecutable . ' artisan tenants:migrate --database=libsql --path=' . escapeshellarg(database_path('migrations/tenant')));
+                $output = shell_exec($command);
+                echo $output . PHP_EOL;
+            } catch (RuntimeException $e) {
+                echo 'Error: ' . $e->getMessage();
+            }
         });
 
         $this->info('Done.');
+    }
+
+    protected function getPhpExecutable()
+    {
+        if (php_sapi_name() == 'cli') {
+            return PHP_BINARY;
+        }
+
+        $possiblePaths = [];
+
+        $os = strtoupper(PHP_OS);
+
+        $possiblePaths = strpos($os, 'WIN') === 0 ? [
+            'C:\\Program Files\\PHP\\php.exe',
+            'C:\\Program Files (x86)\\PHP\\php.exe',
+            'php.exe'
+        ] : [
+            '/usr/bin/php',
+            '/usr/local/bin/php',
+            'php'
+        ];
+
+        foreach ($possiblePaths as $path) {
+            if (is_executable($path)) {
+                return $path;
+            }
+        }
+
+        throw new RuntimeException('PHP executable not found.');
     }
 }
