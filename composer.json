@@ -4,12 +4,18 @@
     "description": "The skeleton application for the Laravel framework.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/tursodatabase/turso-driver-laravel.git"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "laravel/framework": "^11.9",
         "laravel/tinker": "^2.9",
         "stancl/tenancy": "^3.8",
-        "tursodatabase/turso-driver-laravel": "^1.0"
+        "tursodatabase/turso-driver-laravel": "dev-main"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

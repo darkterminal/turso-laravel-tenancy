@@ -38,12 +38,17 @@ final class MigrateFresh extends Command
     public function handle()
     {
         tenancy()->runForMultiple($this->option('tenants'), function ($tenant) {
-            $this->line("Tenant: {$tenant->getTenantKey()}");
-            $this->info('Dropping tables.');
-            $this->call('tenants:rollback');
-
-            $this->info('Migrating.');
-            $this->call('tenants:migrate');
+            $this->info("Turso Tenant: {$tenant->getTenantKey()}");
+            $this->info("This command cannot be used on Turso Database.");
+            $this->info("Use individuals command tenants:rollback and tenants:migrate manually");
+            // $this->line('Dropping tables.');
+            // $this->call('tenants:rollback');
+            // $this->line('Migrating.');
+            // $this->callSilent('tenants:migrate', [
+            //     '--tenants' => [$tenant->getTenantKey()],
+            //     '--step' => $this->option('step'),
+            //     '--force' => true,
+            // ]);
         });
 
         $this->info('Done.');
