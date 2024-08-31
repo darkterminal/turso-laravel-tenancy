@@ -33,7 +33,7 @@ return [
 
         'libsql' => [
             'driver' => 'libsql',
-            'url' => 'file:' . env('DB_DATABASE', 'database.sqlite'),
+            'url' => 'file:'.env('DB_DATABASE', 'database.sqlite'),
             'authToken' => env('DB_AUTH_TOKEN', ''),
             'syncUrl' => env('DB_SYNC_URL', ''),
             'syncInterval' => env('DB_SYNC_INTERVAL', 5),
@@ -157,7 +157,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
         ],
 
         'default' => [

@@ -15,7 +15,7 @@ use Stancl\Tenancy\Events\RollingBackDatabase;
 
 class Rollback extends RollbackCommand
 {
-    use HasATenantsOption, DealsWithMigrations, ExtendsLaravelCommand;
+    use DealsWithMigrations, ExtendsLaravelCommand, HasATenantsOption;
 
     protected static function getTenantCommandName(): string
     {
@@ -49,12 +49,12 @@ class Rollback extends RollbackCommand
     public function handle()
     {
         foreach (config('tenancy.migration_parameters') as $parameter => $value) {
-            if (!$this->input->hasParameterOption($parameter)) {
+            if (! $this->input->hasParameterOption($parameter)) {
                 $this->input->setOption(ltrim($parameter, '-'), $value);
             }
         }
 
-        if (!$this->confirmToProceed()) {
+        if (! $this->confirmToProceed()) {
             return;
         }
 

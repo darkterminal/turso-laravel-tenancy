@@ -6,7 +6,6 @@ namespace Stancl\Tenancy\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Stancl\Tenancy\Contracts\Tenant;
 
 class TenantList extends Command
 {

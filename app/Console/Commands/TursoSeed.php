@@ -42,12 +42,12 @@ class Seed extends SeedCommand
     public function handle()
     {
         foreach (config('tenancy.seeder_parameters') as $parameter => $value) {
-            if (!$this->input->hasParameterOption($parameter)) {
+            if (! $this->input->hasParameterOption($parameter)) {
                 $this->input->setOption(ltrim($parameter, '-'), $value);
             }
         }
 
-        if (!$this->confirmToProceed()) {
+        if (! $this->confirmToProceed()) {
             return;
         }
 

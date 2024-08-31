@@ -8,13 +8,15 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Stancl\Tenancy\Contracts\TenancyBootstrapper;
 use Stancl\Tenancy\Contracts\Tenant;
-use Stancl\Tenancy\Contracts\TenantWithDatabase;
 
 class TursoTenancyBootstrapper implements TenancyBootstrapper
 {
     protected string $db_path;
+
     protected string|bool $connection_mode;
+
     protected string $databaseName;
+
     protected string $organizationName;
 
     public function __construct()
@@ -27,11 +29,11 @@ class TursoTenancyBootstrapper implements TenancyBootstrapper
         $this->db_path = $this->checkPathOrFilename($url) === 'filename' ? database_path() : dirname($url);
 
         if ($this->connection_mode === 'remote_replica') {
-            throw new \Exception("Embedded Replica Connection is not supported");
+            throw new \Exception('Embedded Replica Connection is not supported');
         }
 
         if ($this->connection_mode === 'memory') {
-            throw new \Exception("In Memory Connection is not supported for Tenancy");
+            throw new \Exception('In Memory Connection is not supported for Tenancy');
         }
 
         if ($this->connection_mode === 'remote') {
@@ -104,16 +106,17 @@ class TursoTenancyBootstrapper implements TenancyBootstrapper
     {
         $commands = [
             'tenants:migrate',
-            'tenants:migrate-fresh'
+            'tenants:migrate-fresh',
         ];
+
         return App::runningInConsole() && in_array($_SERVER['argv'][1], $commands);
     }
 
     private function setConnectionMode(string $path, string $url = '', string $token = '', bool $remoteOnly = false): void
     {
-        if ((str_starts_with($path, 'file:') !== false || $path !== 'file:') && !empty($url) && !empty($token) && $remoteOnly === false) {
+        if ((str_starts_with($path, 'file:') !== false || $path !== 'file:') && ! empty($url) && ! empty($token) && $remoteOnly === false) {
             $this->connection_mode = 'remote_replica';
-        } elseif (strpos($path, 'file:') !== false && !empty($url) && !empty($token) && $remoteOnly === true) {
+        } elseif (strpos($path, 'file:') !== false && ! empty($url) && ! empty($token) && $remoteOnly === true) {
             $this->connection_mode = 'remote';
         } elseif (strpos($path, 'file:') !== false) {
             $this->connection_mode = 'local';
@@ -126,7 +129,7 @@ class TursoTenancyBootstrapper implements TenancyBootstrapper
 
     private function readTenantKeyValue(string $filePath)
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return false;
         }
 
@@ -141,6 +144,7 @@ class TursoTenancyBootstrapper implements TenancyBootstrapper
         $secret = fread($fileHandle, $secretLength);
 
         fclose($fileHandle);
+
         return $secret;
     }
 
@@ -152,9 +156,10 @@ class TursoTenancyBootstrapper implements TenancyBootstrapper
 
         if ($remote) {
             $dbName = $this->slugify(pathinfo(str_replace($db_suffix, '', $db), PATHINFO_FILENAME));
-            return "{$this->db_path}" . DIRECTORY_SEPARATOR . "{$dbName}.bin";
+
+            return "{$this->db_path}".DIRECTORY_SEPARATOR."{$dbName}.bin";
         } else {
-            return $this->db_path . DIRECTORY_SEPARATOR . $db;
+            return $this->db_path.DIRECTORY_SEPARATOR.$db;
         }
     }
 
@@ -162,6 +167,7 @@ class TursoTenancyBootstrapper implements TenancyBootstrapper
     {
         $dbBin = $this->readTenantKeyValue($configFile);
         $dbData = json_decode($dbBin, true);
+
         return $dbData;
     }
 

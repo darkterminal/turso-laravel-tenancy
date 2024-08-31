@@ -13,7 +13,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 final class MigrateFresh extends Command
 {
-    use HasATenantsOption, DealsWithMigrations;
+    use DealsWithMigrations, HasATenantsOption;
 
     /**
      * The console command description.
@@ -49,11 +49,11 @@ final class MigrateFresh extends Command
             $this->line('Migrating.');
             try {
                 $phpExecutable = $this->getPhpExecutable();
-                $command = escapeshellcmd($phpExecutable . ' artisan tenants:migrate --tenants=' . $tenantId . ' --database=libsql --path=' . escapeshellarg(database_path('migrations/tenant')));
+                $command = escapeshellcmd($phpExecutable.' artisan tenants:migrate --tenants='.$tenantId.' --database=libsql --path='.escapeshellarg(database_path('migrations/tenant')));
                 $output = shell_exec($command);
-                echo $output . PHP_EOL;
+                echo $output.PHP_EOL;
             } catch (RuntimeException $e) {
-                echo 'Error: ' . $e->getMessage();
+                echo 'Error: '.$e->getMessage();
             }
         });
 
@@ -73,11 +73,11 @@ final class MigrateFresh extends Command
         $possiblePaths = strpos($os, 'WIN') === 0 ? [
             'C:\\Program Files\\PHP\\php.exe',
             'C:\\Program Files (x86)\\PHP\\php.exe',
-            'php.exe'
+            'php.exe',
         ] : [
             '/usr/bin/php',
             '/usr/local/bin/php',
-            'php'
+            'php',
         ];
 
         foreach ($possiblePaths as $path) {

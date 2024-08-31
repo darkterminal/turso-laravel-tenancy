@@ -24,12 +24,12 @@ Route::middleware([
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
     Route::get('/', function () {
-        echo "This is your multi-tenant application. The id of the current tenant is: <br/>";
-        echo "TENANT ID: <strong>". tenant('id') ."</strong><br/>";
-        echo "TENANT DOMAIN: <strong>". tenant('id') .".localhost</strong><br/>";
-        echo "TENANT Connection:";
+        echo 'This is your multi-tenant application. The id of the current tenant is: <br/>';
+        echo 'TENANT ID: <strong>'.tenant('id').'</strong><br/>';
+        echo 'TENANT DOMAIN: <strong>'.tenant('id').'.localhost</strong><br/>';
+        echo 'TENANT Connection:';
         dump(config('database.connections.libsql'));
-        $user = new \App\Models\User();
+        $user = new \App\Models\User;
         dump($user->all());
     });
 });

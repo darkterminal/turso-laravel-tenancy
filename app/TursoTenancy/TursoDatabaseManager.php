@@ -11,9 +11,13 @@ use Stancl\Tenancy\Contracts\TenantWithDatabase;
 class TursoDatabaseManager implements TenantDatabaseManager
 {
     protected string $db_path;
+
     protected string|bool $connection_mode;
+
     protected string $databaseName;
+
     protected string $organizationName;
+
     protected Client $turso;
 
     public function __construct()
@@ -34,11 +38,11 @@ class TursoDatabaseManager implements TenantDatabaseManager
         $this->turso = new Client($this->organizationName, env('TURSO_API_TOKEN'));
 
         if ($this->connection_mode === 'remote_replica') {
-            throw new \Exception("Embedded Replica Connection is not supported");
+            throw new \Exception('Embedded Replica Connection is not supported');
         }
 
         if ($this->connection_mode === 'memory') {
-            throw new \Exception("In Memory Connection is not supported for Tenancy");
+            throw new \Exception('In Memory Connection is not supported for Tenancy');
         }
     }
 
@@ -46,8 +50,10 @@ class TursoDatabaseManager implements TenantDatabaseManager
     {
         if ($this->connection_mode === 'remote') {
             $dbName = $this->slugify(pathinfo($tenant->database()->getName(), PATHINFO_FILENAME));
+
             return $this->createDb($dbName);
         }
+
         return file_put_contents($this->databaseLocation($tenant->database()->getName()), '');
     }
 
@@ -56,9 +62,11 @@ class TursoDatabaseManager implements TenantDatabaseManager
         if ($this->connection_mode === 'remote') {
             $dbName = $this->slugify(pathinfo($tenant->database()->getName(), PATHINFO_FILENAME));
             $deleteDb = $this->turso->databases()->delete($dbName)->get();
-            unlink("{$this->db_path}" . DIRECTORY_SEPARATOR . "{$dbName}.bin");
+            unlink("{$this->db_path}".DIRECTORY_SEPARATOR."{$dbName}.bin");
+
             return $deleteDb['code'] === 200;
         }
+
         return unlink($this->databaseLocation($tenant->database()->getName()));
     }
 
@@ -67,8 +75,10 @@ class TursoDatabaseManager implements TenantDatabaseManager
         if ($this->connection_mode === 'remote') {
             $dbName = $this->slugify(pathinfo($name, PATHINFO_FILENAME));
             $detail = $this->turso->databases()->getDatabase($dbName)->get();
+
             return $detail['code'] === 200;
         }
+
         return file_exists($this->databaseLocation($name));
     }
 
@@ -76,7 +86,7 @@ class TursoDatabaseManager implements TenantDatabaseManager
     {
         if ($this->connection_mode === 'remote') {
             $dbName = $this->slugify(pathinfo($databaseName, PATHINFO_FILENAME));
-            $dbBin = $this->readTenantKeyValue("{$this->db_path}" . DIRECTORY_SEPARATOR . "{$dbName}.bin");
+            $dbBin = $this->readTenantKeyValue("{$this->db_path}".DIRECTORY_SEPARATOR."{$dbName}.bin");
             $dbData = json_decode($dbBin, true);
             $baseConfig['authToken'] = $dbData['token'];
             $baseConfig['syncUrl'] = $dbData['url'];
@@ -91,7 +101,7 @@ class TursoDatabaseManager implements TenantDatabaseManager
 
     public function setConnection(string $connection): void
     {
-        // 
+        //
     }
 
     private function createDb(string $dbName)
@@ -100,15 +110,17 @@ class TursoDatabaseManager implements TenantDatabaseManager
         if ($createDb['code']) {
             $createDbToken = $this->turso->databases()->createToken($dbName)->get();
             if ($createDbToken['code']) {
-                $createKey = $this->createTenantKey("{$this->db_path}" . DIRECTORY_SEPARATOR . "{$dbName}.bin", json_encode([
+                $createKey = $this->createTenantKey("{$this->db_path}".DIRECTORY_SEPARATOR."{$dbName}.bin", json_encode([
                     'token' => $createDbToken['data'],
-                    'url' => "libsql://{$createDb['data']['Hostname']}"
+                    'url' => "libsql://{$createDb['data']['Hostname']}",
                 ]));
+
                 return $createKey;
             }
 
             return false;
         }
+
         return false;
     }
 
@@ -123,14 +135,14 @@ class TursoDatabaseManager implements TenantDatabaseManager
 
     private function databaseLocation(string $db_name): string
     {
-        return $this->db_path . DIRECTORY_SEPARATOR . $db_name;
+        return $this->db_path.DIRECTORY_SEPARATOR.$db_name;
     }
 
     private function setConnectionMode(string $path, string $url = '', string $token = '', bool $remoteOnly = false): void
     {
-        if ((str_starts_with($path, 'file:') !== false || $path !== 'file:') && !empty($url) && !empty($token) && $remoteOnly === false) {
+        if ((str_starts_with($path, 'file:') !== false || $path !== 'file:') && ! empty($url) && ! empty($token) && $remoteOnly === false) {
             $this->connection_mode = 'remote_replica';
-        } elseif (strpos($path, 'file:') !== false && !empty($url) && !empty($token) && $remoteOnly === true) {
+        } elseif (strpos($path, 'file:') !== false && ! empty($url) && ! empty($token) && $remoteOnly === true) {
             $this->connection_mode = 'remote';
         } elseif (strpos($path, 'file:') !== false) {
             $this->connection_mode = 'local';
@@ -154,12 +166,13 @@ class TursoDatabaseManager implements TenantDatabaseManager
         fwrite($fileHandle, $key);
 
         fclose($fileHandle);
+
         return true;
     }
 
     private function readTenantKeyValue(string $filePath)
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return false;
         }
 
@@ -174,6 +187,7 @@ class TursoDatabaseManager implements TenantDatabaseManager
         $secret = fread($fileHandle, $secretLength);
 
         fclose($fileHandle);
+
         return $secret;
     }
 

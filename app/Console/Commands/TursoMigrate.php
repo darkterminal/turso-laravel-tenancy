@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Stancl\Tenancy\Commands;
 
-use RuntimeException;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Console\Migrations\MigrateCommand;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Stancl\Tenancy\Concerns\DealsWithMigrations;
 use Stancl\Tenancy\Concerns\ExtendsLaravelCommand;
 use Stancl\Tenancy\Concerns\HasATenantsOption;
@@ -17,7 +17,7 @@ use Stancl\Tenancy\Events\MigratingDatabase;
 
 final class Migrate extends MigrateCommand
 {
-    use HasATenantsOption, DealsWithMigrations, ExtendsLaravelCommand;
+    use DealsWithMigrations, ExtendsLaravelCommand, HasATenantsOption;
 
     protected $description = 'Run migrations for tenant(s)';
 
@@ -41,12 +41,12 @@ final class Migrate extends MigrateCommand
     public function handle()
     {
         foreach (config('tenancy.migration_parameters') as $parameter => $value) {
-            if (!$this->input->hasParameterOption($parameter)) {
+            if (! $this->input->hasParameterOption($parameter)) {
                 $this->input->setOption(ltrim($parameter, '-'), $value);
             }
         }
 
-        if (!$this->confirmToProceed()) {
+        if (! $this->confirmToProceed()) {
             return;
         }
 
@@ -77,11 +77,11 @@ final class Migrate extends MigrateCommand
         $possiblePaths = strpos($os, 'WIN') === 0 ? [
             'C:\\Program Files\\PHP\\php.exe',
             'C:\\Program Files (x86)\\PHP\\php.exe',
-            'php.exe'
+            'php.exe',
         ] : [
             '/usr/bin/php',
             '/usr/local/bin/php',
-            'php'
+            'php',
         ];
 
         foreach ($possiblePaths as $path) {
