@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Stancl\Tenancy\Contracts\TenancyBootstrapper;
 use Stancl\Tenancy\Contracts\Tenant;
+use Stancl\Tenancy\Contracts\TenantWithDatabase;
 
 class TursoTenancyBootstrapper implements TenancyBootstrapper
 {
@@ -39,6 +40,57 @@ class TursoTenancyBootstrapper implements TenancyBootstrapper
         }
     }
 
+    public function bootstrap(Tenant $tenant)
+    {
+        $tenantId = $tenant->getTenantKey();
+
+        if ($this->connection_mode === 'remote') {
+            $tenantDatabasePath = $this->getTenantDatabasePath($tenantId, true);
+            $dbData = $this->getRemoteDatabaseConfig($tenantDatabasePath);
+            config([
+                'database.connections.libsql.authToken' => $dbData['token'],
+                'database.connections.libsql.syncUrl' => $dbData['url'],
+                'database.connections.libsql.remoteOnly' => true,
+            ]);
+        } else {
+            $tenantDatabasePath = $this->getTenantDatabasePath($tenantId);
+            if ($this->isRunningMigrations()) {
+                config([
+                    'database.connections.libsql.url' => "file:$tenantDatabasePath",
+                ]);
+            } else {
+                config([
+                    'database.connections.libsql.database' => $tenantDatabasePath,
+                ]);
+            }
+        }
+
+        DB::purge('libsql');
+        DB::reconnect('libsql');
+
+        DB::setDefaultConnection('libsql');
+    }
+
+    public function revert()
+    {
+        if ($this->connection_mode === 'remote') {
+            config([
+                'database.connections.libsql.authToken' => env('DB_AUTH_TOKEN'),
+                'database.connections.libsql.syncUrl' => env('DB_SYNC_URL'),
+                'database.connections.libsql.remoteOnly' => true,
+            ]);
+        } else {
+            config([
+                'database.connections.libsql.database' => config('database.connections.central.database'),
+            ]);
+        }
+
+        DB::purge('libsql');
+        DB::reconnect('libsql');
+
+        DB::setDefaultConnection(config('database.default'));
+    }
+
     private function checkPathOrFilename(string $string): string
     {
         if (strpos($string, DIRECTORY_SEPARATOR) !== false || strpos($string, '/') !== false || strpos($string, '\\') !== false) {
@@ -46,6 +98,15 @@ class TursoTenancyBootstrapper implements TenancyBootstrapper
         } else {
             return 'filename';
         }
+    }
+
+    private function isRunningMigrations()
+    {
+        $commands = [
+            'tenants:migrate',
+            'tenants:migrate-fresh'
+        ];
+        return App::runningInConsole() && in_array($_SERVER['argv'][1], $commands);
     }
 
     private function setConnectionMode(string $path, string $url = '', string $token = '', bool $remoteOnly = false): void
@@ -102,71 +163,6 @@ class TursoTenancyBootstrapper implements TenancyBootstrapper
         $dbBin = $this->readTenantKeyValue($configFile);
         $dbData = json_decode($dbBin, true);
         return $dbData;
-    }
-
-    public function bootstrap(Tenant $tenant)
-    {
-        $tenantId = $tenant->getTenantKey();
-
-        if ($this->connection_mode === 'remote') {
-            $tenantDatabasePath = $this->getTenantDatabasePath($tenantId, true);
-            $dbData = $this->getRemoteDatabaseConfig($tenantDatabasePath);
-            config([
-                'database.connections.libsql.authToken' => $dbData['token'],
-                'database.connections.libsql.syncUrl' => $dbData['url'],
-                'database.connections.libsql.remoteOnly' => true,
-            ]);
-        } else {
-            $tenantDatabasePath = $this->getTenantDatabasePath($tenantId);
-            if ($this->isRunningMigrations()) {
-                config([
-                    'database.connections.libsql.url' => "file:$tenantDatabasePath",
-                ]);
-            } else {
-                config([
-                    'database.connections.libsql.database' => $tenantDatabasePath,
-                ]);
-            }
-        }
-
-        DB::purge('libsql');
-        DB::reconnect('libsql');
-
-        DB::setDefaultConnection('libsql');
-    }
-
-    public function revert()
-    {
-        if ($this->connection_mode === 'remote') {
-            config([
-                'database.connections.libsql.authToken' => env('DB_AUTH_TOKEN'),
-                'database.connections.libsql.syncUrl' => env('DB_SYNC_URL'),
-                'database.connections.libsql.remoteOnly' => true,
-            ]);
-        } else {
-            config([
-                'database.connections.libsql.database' => config('database.connections.central.database'),
-            ]);
-        }
-
-        DB::purge('libsql');
-        DB::reconnect('libsql');
-
-        DB::setDefaultConnection(config('database.default'));
-    }
-
-    /**
-     * Determine if the application is running migrations.
-     *
-     * @return bool
-     */
-    protected function isRunningMigrations()
-    {
-        $commands = [
-            'tenants:migrate',
-            'tenants:rollback'
-        ];
-        return App::runningInConsole() && in_array($_SERVER['argv'][1], $commands);
     }
 
     private function slugify($string)
