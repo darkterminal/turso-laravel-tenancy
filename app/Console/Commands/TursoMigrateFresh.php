@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Stancl\Tenancy\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Stancl\Tenancy\Concerns\DealsWithMigrations;
 use Stancl\Tenancy\Concerns\HasATenantsOption;
@@ -38,7 +39,8 @@ final class MigrateFresh extends Command
      */
     public function handle()
     {
-        tenancy()->runForMultiple($this->option('tenants'), function ($tenant) {
+        $tenants = $this->option('tenants') ?: DB::table('tenants')->pluck('id');
+        tenancy()->runForMultiple($tenants, function ($tenant) {
             $tenantId = $tenant->getTenantKey();
             $this->info("Tenant: {$tenantId}");
             $this->line('Dropping tables.');
@@ -47,7 +49,7 @@ final class MigrateFresh extends Command
             $this->line('Migrating.');
             try {
                 $phpExecutable = $this->getPhpExecutable();
-                $command = escapeshellcmd($phpExecutable . ' artisan tenants:migrate --database=libsql --path=' . escapeshellarg(database_path('migrations/tenant')));
+                $command = escapeshellcmd($phpExecutable . ' artisan tenants:migrate --tenants=' . $tenantId . ' --database=libsql --path=' . escapeshellarg(database_path('migrations/tenant')));
                 $output = shell_exec($command);
                 echo $output . PHP_EOL;
             } catch (RuntimeException $e) {
