@@ -21,12 +21,12 @@ return [
      * To configure their behavior, see the config keys below.
      */
     'bootstrappers' => [
+        App\TursoTenancy\TursoTenancyBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\RedisTenancyBootstrapper::class, // Note: phpredis is needed
-        App\TursoTenancy\TursoTenancyBootstrapper::class,
     ],
     /**
      * Database tenancy config. Used by DatabaseTenancyBootstrapper.
@@ -48,9 +48,10 @@ return [
          * TenantDatabaseManagers are classes that handle the creation & deletion of tenant databases.
          */
         'managers' => [
-            'sqlite' => Stancl\Tenancy\TenantDatabaseManagers\SQLiteDatabaseManager::class,
-            'mysql' => Stancl\Tenancy\TenantDatabaseManagers\MySQLDatabaseManager::class,
-            'pgsql' => Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLDatabaseManager::class,
+            'libsql' => App\TursoTenancy\TursoDatabaseManager::class,
+            // 'sqlite' => Stancl\Tenancy\TenantDatabaseManagers\SQLiteDatabaseManager::class,
+            // 'mysql' => Stancl\Tenancy\TenantDatabaseManagers\MySQLDatabaseManager::class,
+            // 'pgsql' => Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLDatabaseManager::class,
             /**
              * Use this database manager for MySQL to have a DB user created for each tenant database.
              * You can customize the grants given to these users by changing the $grants property.
@@ -61,7 +62,6 @@ return [
              * want to separate tenant DBs by schemas rather than databases.
              */
             // 'pgsql' => Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLSchemaManager::class, // Separate by schema instead of database
-            'libsql' => App\TursoTenancy\TursoDatabaseManager::class,
         ],
     ],
     /**
