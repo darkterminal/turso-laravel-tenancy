@@ -32,8 +32,12 @@ class TenantList extends Command
     {
         $this->info('Listing all tenants.');
         $tenants = DB::table('tenants')->join('domains', 'domains.tenant_id', '=', 'tenants.id')->get()->toArray();
-        collect($tenants)->each(function ($tenant) {
-            $this->line("[Tenant] {$tenant['tenant_id']}, Domain: {$tenant['domain']}");
-        });
+        $tenantLists = array_map(fn ($tenant) => [
+            'id' => $tenant['tenant_id'],
+            'database' => "tenant-{$tenant['tenant_id']}",
+            'domain' => $tenant['domain'],
+        ], $tenants);
+
+        $this->table(['Tenant ID', 'Database', 'Domain'], $tenantLists);
     }
 }
