@@ -18,6 +18,10 @@ class TursoDatabaseManager implements TenantDatabaseManager
 
     protected string $organizationName;
 
+    protected string $defaultGroup;
+
+    protected bool $isSchema;
+
     protected Client $turso;
 
     public function __construct()
@@ -27,15 +31,15 @@ class TursoDatabaseManager implements TenantDatabaseManager
 
         $this->setConnectionMode($config['url'], $config['syncUrl'], $config['authToken'], $config['remoteOnly']);
 
+        $this->defaultGroup = env('TURSO_DB_DEFAULT_GROUP', 'default');
+        $this->isSchema = env('TURSO_MULTIDB_SCHEMA', false);
+
         $url = str_replace('file:', '', $config['url']);
         $this->db_path = $this->checkPathOrFilename($url) === 'filename' ? database_path() : dirname($url);
 
-        if ($this->connection_mode === 'remote') {
-            $this->databaseName = env('TURSO_DB_PRIMARY_NAME');
-            $this->organizationName = env('TURSO_DB_PRIMARY_ORG');
+        if ($this->isSchema === true && $this->connection_mode === 'local') {
+            throw new \Exception('You\'re using Multi-DB Schema and it\'s only support with Remote Connection');
         }
-
-        $this->turso = new Client($this->organizationName, env('TURSO_API_TOKEN'));
 
         if ($this->connection_mode === 'remote_replica') {
             throw new \Exception('Embedded Replica Connection is not supported');
@@ -43,6 +47,12 @@ class TursoDatabaseManager implements TenantDatabaseManager
 
         if ($this->connection_mode === 'memory') {
             throw new \Exception('In Memory Connection is not supported for Tenancy');
+        }
+
+        if ($this->connection_mode === 'remote') {
+            $this->databaseName = env('TURSO_DB_PRIMARY_NAME');
+            $this->organizationName = env('TURSO_DB_PRIMARY_ORG');
+            $this->turso = new Client($this->organizationName, env('TURSO_API_TOKEN'));
         }
     }
 
@@ -54,7 +64,7 @@ class TursoDatabaseManager implements TenantDatabaseManager
             return $this->createDb($dbName);
         }
 
-        return file_put_contents($this->databaseLocation($tenant->database()->getName()), '');
+        return file_put_contents($this->databaseLocation($tenant->database()->getName()), '') > 0;
     }
 
     public function deleteDatabase(TenantWithDatabase $tenant): bool
@@ -106,10 +116,28 @@ class TursoDatabaseManager implements TenantDatabaseManager
 
     private function createDb(string $dbName)
     {
-        $createDb = $this->turso->databases()->create(databaseName: $dbName, group: env('TURSO_DB_DEFAULT_GROUP', 'default'))->get();
-        if ($createDb['code']) {
+        if ($this->isSchema === true) {
+            $createDb = $this->turso->databases()->create(databaseName: $dbName, schema: $this->databaseName)->get();
+            if ($createDb['code'] === 200) {
+                dump([
+                    'token' => env('DB_AUTH_TOKEN'),
+                    'url' => "libsql://{$createDb['data']['Hostname']}",
+                ]);
+                $createKey = $this->createTenantKey("{$this->db_path}".DIRECTORY_SEPARATOR."{$dbName}.bin", json_encode([
+                    'token' => env('DB_AUTH_TOKEN'),
+                    'url' => "libsql://{$createDb['data']['Hostname']}",
+                ]));
+
+                return $createKey;
+            }
+
+            return false;
+        }
+
+        $createDb = $this->turso->databases()->create(databaseName: $dbName, group: $this->defaultGroup)->get();
+        if ($createDb['code'] === 200) {
             $createDbToken = $this->turso->databases()->createToken($dbName)->get();
-            if ($createDbToken['code']) {
+            if ($createDbToken['code'] === 200) {
                 $createKey = $this->createTenantKey("{$this->db_path}".DIRECTORY_SEPARATOR."{$dbName}.bin", json_encode([
                     'token' => $createDbToken['data'],
                     'url' => "libsql://{$createDb['data']['Hostname']}",

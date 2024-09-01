@@ -41,6 +41,11 @@ class Seed extends SeedCommand
      */
     public function handle()
     {
+        if (env('TURSO_MULTIDB_SCHEMA', false)) {
+            $this->error('This command is not support for Multi-DB Schemas');
+            exit;
+        }
+
         foreach (config('tenancy.seeder_parameters') as $parameter => $value) {
             if (! $this->input->hasParameterOption($parameter)) {
                 $this->input->setOption(ltrim($parameter, '-'), $value);

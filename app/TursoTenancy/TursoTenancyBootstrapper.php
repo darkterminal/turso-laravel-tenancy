@@ -19,14 +19,22 @@ class TursoTenancyBootstrapper implements TenancyBootstrapper
 
     protected string $organizationName;
 
+    protected bool $isSchema;
+
     public function __construct()
     {
         $config = config('database.connections.libsql');
         $config['url'] = strpos($config['url'], ':memory:') !== false ? str_replace('file:', '', $config['url']) : $config['url'];
         $this->setConnectionMode($config['url'], $config['syncUrl'], $config['authToken'], $config['remoteOnly']);
 
+        $this->isSchema = env('TURSO_MULTIDB_SCHEMA', false);
+
         $url = str_replace('file:', '', $config['url']);
         $this->db_path = $this->checkPathOrFilename($url) === 'filename' ? database_path() : dirname($url);
+
+        if ($this->isSchema === true && $this->connection_mode === 'local') {
+            throw new \Exception('You\'re using Multi-DB Schema and it\'s only support with Remote Connection');
+        }
 
         if ($this->connection_mode === 'remote_replica') {
             throw new \Exception('Embedded Replica Connection is not supported');
